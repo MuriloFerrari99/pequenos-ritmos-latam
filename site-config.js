@@ -11,7 +11,7 @@
     publicBaseUrl: "https://muriloferrari99.github.io/pequenos-ritmos-latam/",
     legalAddress: "Rua João Wyclif, 420, CEP 86050-450, Londrina - PR, Brasil",
     legalReviewApproved: true,
-    measurementEnabled: false,
+    measurementEnabled: true,
     metaPixelId: "2085840802138189",
     consentVersion: "2026-08-30",
     checkoutHost: "pay.hotmart.com"

@@ -374,7 +374,7 @@
       .replace(/[^A-Za-z0-9-]/g, "")
       .replace(/-+/g, "-")
       .replace(/^-|-$/g, "")
-      .slice(0, 30);
+      .slice(0, 50);
   }
 
   function loadConsent() {
