@@ -137,7 +137,7 @@ function fbqCalls(runtime) {
   assert.equal(checkout.searchParams.get("checkoutMode"), "10");
   assert.equal(checkout.searchParams.has("off"), false);
   assert.equal(checkout.searchParams.has("hotfeature"), false);
-  assert.equal(checkout.searchParams.get("fbclid"), "click-test", "fbclid segue salvo negação expressa");
+  assert.equal(checkout.searchParams.has("fbclid"), false, "fbclid depende de consentimento explícito");
   assert.equal(checkout.searchParams.has("email"), false);
   assert.equal(checkout.searchParams.has("child_age"), false);
   assert.equal(checkout.searchParams.has("quiz_profile"), false);
@@ -148,9 +148,9 @@ function fbqCalls(runtime) {
 {
   const runtime = createQuizRuntime({ search: "?fbclid=click-test", measurementEnabled: true });
   assert.equal(runtime.elements.get("consent").hidden, false);
-  assert.equal(runtime.scripts.length, 1, "Pixel carrega no load, antes de qualquer escolha");
-  assert(fbqCalls(runtime).some((call) => call[0] === "track" && call[1] === "PageView"), "PageView dispara no load");
-  assert(fbqCalls(runtime).some((call) => call[0] === "track" && call[1] === "ViewContent"), "ViewContent dispara no load");
+  assert.equal(runtime.scripts.length, 0, "Pixel não carrega antes da escolha");
+  assert.equal(fbqCalls(runtime).length, 0, "nenhum evento antes de consentir");
+
   runtime.documentListeners.click({ target: runtime.allow, preventDefault() {} });
   assert.equal(runtime.scripts.length, 1, "aceitar não duplica o script");
   assert.equal(runtime.scripts[0].src, "https://connect.facebook.net/en_US/fbevents.js");
@@ -168,9 +168,9 @@ function fbqCalls(runtime) {
   runtime.documentListeners.click({ target: runtime.deny, preventDefault() {} });
   runtime.elements.get("checkout-link").listeners.click();
   const denied = fbqCalls(runtime);
-  assert(denied.some((call) => call[0] === "consent" && call[1] === "revoke"), "negar revoga o consentimento no Pixel");
+  assert.equal(runtime.scripts.length, 0, "negar antes de aceitar mantém o Pixel ausente");
   assert(!denied.some((call) => call[0] === "trackCustom" && call[1] === "CheckoutClick"), "nada é enviado depois de negar");
-  assert.equal(runtime.window.dataLayer.filter((entry) => entry.event === "CheckoutClick").length, 0);
+  assert.equal((runtime.window.dataLayer || []).filter((entry) => entry.event === "CheckoutClick").length, 0);
 }
 
 function runDemo({ consent = false } = {}) {
@@ -211,4 +211,4 @@ assert.match(publicConfig, /Rua João Wyclif, 420, CEP 86050-450/);
 assert.doesNotMatch(publicConfig, /legalAddress:\s*"\[DIRECCIÓN LEGAL\]"/);
 assert.match(fs.readFileSync(path.join(root, "index.html"), "utf8"), /href="terminos\.html"/);
 
-console.log("OK: quiz preserva atribuição agregada, carrega o Pixel no load com PageView/ViewContent, respeita a negação e nunca emite Purchase.");
+console.log("OK: quiz preserva atribuição agregada, carrega o Pixel somente após consentimento, respeita a negação e nunca emite Purchase.");

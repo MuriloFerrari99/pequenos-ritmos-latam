@@ -430,7 +430,7 @@
       var safe = {};
       Object.keys(stored).forEach(function (key) {
         if (ALLOWED_ATTRIBUTION_KEYS.indexOf(key) === -1) return;
-        if (key === "fbclid" && measurementConsent === false) return;
+        if (key === "fbclid" && measurementConsent !== true) return;
         var value = key === "sck"
           ? safeSck(stored[key])
           : safeCampaignValue(stored[key], key === "fbclid" ? MAX_ATTR_LENGTH : 160);
@@ -444,7 +444,7 @@
     var safe = {};
     Object.keys(source || {}).forEach(function (key) {
       if (ALLOWED_ATTRIBUTION_KEYS.indexOf(key) === -1) return;
-      if (key === "fbclid" && measurementConsent === false) return;
+      if (key === "fbclid" && measurementConsent !== true) return;
       safe[key] = source[key];
     });
     try { window.sessionStorage.setItem(ATTRIBUTION_STORAGE_KEY, JSON.stringify(safe)); }
@@ -465,7 +465,7 @@
     url.searchParams.delete("hotfeature");
     url.searchParams.delete("fbclid");
     Object.keys(attribution).forEach(function (key) {
-      if (key === "fbclid" && measurementConsent === false) return;
+      if (key === "fbclid" && measurementConsent !== true) return;
       url.searchParams.set(key, attribution[key]);
     });
     url.searchParams.set("sck", safeSck(attribution.sck) || safeSck("qz-conoce-" + conceptCode(attribution)));
@@ -475,7 +475,7 @@
   function buildLandingDemoUrl() {
     var url = new URL("demo.html", window.location.href);
     Object.keys(attribution).forEach(function (key) {
-      if (key === "fbclid" && measurementConsent === false) return;
+      if (key === "fbclid" && measurementConsent !== true) return;
       url.searchParams.set(key, attribution[key]);
     });
     return url.toString();
@@ -486,7 +486,7 @@
   }
 
   function externalTrackingAllowed() {
-    return measurementConsent !== false && measurementConfigured();
+    return measurementConsent === true && measurementConfigured();
   }
 
   function installMetaPixel() {
@@ -538,7 +538,7 @@
       currency: "USD"
     };
     Object.keys(attribution).forEach(function (key) {
-      if (key === "fbclid" && measurementConsent === false) return;
+      if (key === "fbclid" && measurementConsent !== true) return;
       payload[key] = attribution[key];
     });
     window.dataLayer = window.dataLayer || [];

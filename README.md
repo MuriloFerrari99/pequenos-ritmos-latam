@@ -1,3 +1,21 @@
+# Kit Sem Telas / Kit Sin Pantallas — páginas de venda
+
+As páginas atuais ficam em `vsl/pt/` e `vsl/es/`. O caminho foi preservado para não quebrar os anúncios antigos, mas o vídeo de venda foi retirado do fluxo. `kit/pt/` e `kit/es/` redirecionam para essas páginas com atribuição filtrada.
+
+Correção de 04/09/2026: demonstração real em português, compra direta, preços sem contagem regressiva, sem promessas de comportamento ou packs futuros, suporte e condições acessíveis, consentimento opcional antes do Pixel. A página ES deixou de exibir amostras em português; a comprovação visual da versão espanhola permanece pendente para uma futura campanha LATAM.
+
+O site emite PageView, ViewContent e CheckoutClick somente com consentimento. InitiateCheckout e Purchase pertencem à Hotmart. Configurar o pixel web não comprova uma venda recebida: aprovação, valor, moeda e ausência de duplicação precisam ser verificados na integração da Hotmart. Nunca adicionar tokens ao repositório.
+
+```sh
+python3 -m http.server 8766 --bind 127.0.0.1
+node tests/sales.test.mjs
+node tests/tracking.test.mjs
+```
+
+A raiz ainda contém o quiz legado do produto Esencial (6–24 meses), com consentimento também corrigido. A documentação histórica desse quiz segue abaixo; seus resultados anteriores não comprovam o checkout dos novos kits.
+
+---
+
 # Quiz V2 — “Descubre cuánto conoces a tu hijo”
 
 Referência funcional local do quiz conectado ao produto **Agenda de Juegos y Rutinas — Esencial (6–24 meses)**, marca **Pequeños Ritmos**. A pasta é autocontida: `demo.html`, `privacidad.html`, `terminos.html`, `reembolsos.html` e `site-config.js` não dependem da landing V3.
@@ -55,7 +73,7 @@ Ele prova a allowlist de atribuição, exclusão de respostas/dados arbitrários
 
 ## Medição
 
-`measurementEnabled` está `false` em `site-config.js`. Nenhum Pixel ou script externo é instalado nesta prévia. O loader consentido e o Dataset/Pixel real `2085840802138189` já estão configurados, mas o gate continua desligado até validar a URL pública, políticas e eventos. Quando habilitado, o script de Meta só carrega após uma aceitação explícita; rejeitar não bloqueia o quiz nem o checkout.
+`measurementEnabled` está `true` em `site-config.js`; isso disponibiliza a medição, mas não dispensa o consentimento. O Dataset/Pixel é `2085840802138189`. Quando habilitado, o script de Meta só carrega após uma aceitação explícita; rejeitar não bloqueia o quiz nem o checkout.
 
 O clique próprio usa apenas o evento customizado `CheckoutClick`. `InitiateCheckout` fica reservado ao carregamento confirmado do checkout Hotmart, e `Purchase` deve vir somente da Hotmart Web/API após aprovação.
 
