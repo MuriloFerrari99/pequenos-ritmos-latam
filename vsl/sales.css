@@ -6,3 +6,5 @@
 @media(max-width:600px){.gallery{grid-template-columns:1fr;gap:24px;max-width:380px;margin-inline:auto}.gallery span{font-size:14px}}
 
 .proof-main{max-width:420px;grid-template-columns:1fr;margin-inline:auto}#oferta{scroll-margin-top:20px}
+
+.consent{max-height:calc(100dvh - 32px);overflow-y:auto}.consent .actions{flex-wrap:wrap}.consent button{min-width:120px}@media(max-width:600px){.consent{max-height:calc(100dvh - 16px)}}

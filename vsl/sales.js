@@ -4,6 +4,7 @@
   var key = 'pr-sales-measurement-v2';
   var choice = null;
   var initialized = false;
+  var localChoiceUnstored = false;
   var dialog = document.getElementById('consent');
   var links = Array.from(document.querySelectorAll('a.co'));
   var params = new URLSearchParams(window.location.search);
@@ -37,17 +38,42 @@
     window.fbq('track','ViewContent',{content_ids:[config.product],content_type:'product'});
     initialized=true;
   }
-  function choose(value) {
-    choice=value;
-    try { window.localStorage.setItem(key,value); } catch (_) {}
-    if (value === 'deny' && window.fbq) window.fbq('consent','revoke');
-    dialog.hidden=true; updateLinks(); start();
-    document.getElementById('measurement-status').textContent=config.lang === 'pt' ? (value === 'allow' ? 'Medição opcional autorizada.' : 'Medição opcional desativada.') : (value === 'allow' ? 'Medición opcional autorizada.' : 'Medición opcional desactivada.');
+  function applyChoice(value, persist) {
+    choice=value === 'allow' || value === 'deny' ? value : null;
+    if (persist) {
+      try { window.localStorage.setItem(key,choice); localChoiceUnstored=false; } catch (_) { localChoiceUnstored=true; }
+    }
+    if (choice !== 'allow' && window.fbq) window.fbq('consent','revoke');
+    dialog.hidden=choice !== null; updateLinks(); start();
+    document.getElementById('measurement-status').textContent=choice === null ? '' : config.lang === 'pt' ? (choice === 'allow' ? 'Medição opcional autorizada.' : 'Medição opcional desativada.') : (choice === 'allow' ? 'Medición opcional autorizada.' : 'Medición opcional desactivada.');
+  }
+  function choose(value) { applyChoice(value,true); }
+  function syncChoice() {
+    // If storage is unavailable, keep only this page's known choice.
+    // A missing/invalid stored preference is not consent.
+    // Failed writes must not let stale storage override a choice made here.
+    if (localChoiceUnstored) return;
+    try {
+      var saved=window.localStorage.getItem(key);
+      var value=saved === 'allow' || saved === 'deny' ? saved : null;
+      if (value !== choice) applyChoice(value,false);
+    } catch (_) {}
+  }
+  if (typeof window.addEventListener === 'function') {
+    window.addEventListener('storage',function(event){
+      if (event.key !== key && event.key !== null) return;
+      try {
+        if (event.storageArea && event.storageArea !== window.localStorage) return;
+      } catch (_) { return; }
+      syncChoice();
+    });
   }
   document.getElementById('allow').addEventListener('click',function(){choose('allow');});
   document.getElementById('deny').addEventListener('click',function(){choose('deny');});
   document.getElementById('preferences').addEventListener('click',function(){dialog.hidden=false;document.getElementById('deny').focus();});
   links.forEach(function(link){link.addEventListener('click',function(){
+    // Recheck before tracking in case another tab revoked consent moments ago.
+    syncChoice();
     // CheckoutClick is a diagnostic. Hotmart owns checkout-load and purchase events.
     if(choice === 'allow' && window.fbq) window.fbq('trackCustom','CheckoutClick',{content_ids:[config.product]});
   });});
