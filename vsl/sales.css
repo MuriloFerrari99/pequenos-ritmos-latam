@@ -2,3 +2,7 @@
 
 /* Keep BR worksheet proof readable on phones. */
 @media(max-width:600px){html[lang="pt-BR"] .gallery{grid-template-columns:1fr;gap:24px;max-width:380px;margin-inline:auto}html[lang="pt-BR"] .gallery span{font-size:14px}}
+
+@media(max-width:600px){.gallery{grid-template-columns:1fr;gap:24px;max-width:380px;margin-inline:auto}.gallery span{font-size:14px}}
+
+.proof-main{max-width:420px;grid-template-columns:1fr;margin-inline:auto}#oferta{scroll-margin-top:20px}
