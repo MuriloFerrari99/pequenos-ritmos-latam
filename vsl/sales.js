@@ -8,7 +8,7 @@
   var dialog = document.getElementById('consent');
   var links = Array.from(document.querySelectorAll('a.co'));
   var params = new URLSearchParams(window.location.search);
-  var allowed = ['utm_source','utm_medium','utm_campaign','utm_content','utm_term','mcid','masid','maid','sck','src'];
+  var allowed = ['utm_source','utm_medium','utm_campaign','utm_content','utm_term','mcid','masid','maid','meta_campaign_id','meta_adset_id','meta_ad_id','sck','src'];
   try { choice = window.localStorage.getItem(key); } catch (_) {}
   function checkout() {
     var url = new URL(config.checkout);

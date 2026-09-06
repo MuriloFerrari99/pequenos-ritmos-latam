@@ -8,7 +8,7 @@ function runtime(saved=null,blocked=false){
   const links=[{href:'https://pay.hotmart.com/T107442451G?checkoutMode=10',events:{},addEventListener(n,f){this.events[n]=f;}}];
   elements['sales-config']={dataset:{checkout:links[0].href,pixel:'2085840802138189',product:'8444319',lang:'pt'}};
   const scripts=[];
-  const window={location:{search:'?utm_source=meta&utm_campaign=pr-k2&sck=ad123&fbclid=test-click&email=a%40b.com&child_age=4&off=bad'},localStorage:{getItem(){if(blocked)throw Error();return saved},setItem(_,v){if(blocked)throw Error();saved=v}}};
+  const window={location:{search:'?utm_source=meta&utm_campaign=pr-k2&meta_campaign_id=120250216188090633&meta_adset_id=120250216545720633&meta_ad_id=120250216545710633&sck=ad123&fbclid=test-click&email=a%40b.com&child_age=4&off=bad'},localStorage:{getItem(){if(blocked)throw Error();return saved},setItem(_,v){if(blocked)throw Error();saved=v}}};
   const document={getElementById:id=>elements[id],querySelectorAll:()=>links,createElement:()=>({}),head:{appendChild:s=>scripts.push(s)}};
   vm.runInNewContext(source,{window,document,URL,URLSearchParams});
   return{window,elements,links,scripts,calls:()=>Array.from(window.fbq?.queue??[],a=>Array.from(a))};
@@ -20,6 +20,9 @@ for(const blocked of [false,true]){
   let u=new URL(r.links[0].href);
   assert.equal(u.searchParams.get('sck'),'ad123');
   assert.equal(u.searchParams.get('checkoutMode'),'10');
+  assert.equal(u.searchParams.get('meta_campaign_id'),'120250216188090633');
+  assert.equal(u.searchParams.get('meta_adset_id'),'120250216545720633');
+  assert.equal(u.searchParams.get('meta_ad_id'),'120250216545710633');
   for(const p of ['fbclid','email','child_age','off']) assert.equal(u.searchParams.has(p),false);
   r.elements.allow.events.click();
   assert.equal(r.scripts.length,1);
