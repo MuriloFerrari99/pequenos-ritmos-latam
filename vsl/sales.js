@@ -1,29 +1,41 @@
 (function () {
   'use strict';
   var config = document.getElementById('sales-config').dataset;
-  var key = 'pr-sales-measurement-v2';
+  var key = 'pr-sales-measurement-v3';
   var choice = null;
   var initialized = false;
   var localChoiceUnstored = false;
+  var utmifyLoaded = false;
+  var diagnosticsStarted = false;
   var dialog = document.getElementById('consent');
   var links = Array.from(document.querySelectorAll('a.co'));
   var params = new URLSearchParams(window.location.search);
-  var allowed = ['utm_source','utm_medium','utm_campaign','utm_content','utm_term','mcid','masid','maid','meta_campaign_id','meta_adset_id','meta_ad_id','sck','src'];
   try { choice = window.localStorage.getItem(key); } catch (_) {}
-  function checkout() {
+  function checkout(link) {
     var url = new URL(config.checkout);
-    allowed.forEach(function (name) {
-      var value = params.get(name);
-      // Campaign identifiers only: never forward contact details or quiz answers.
-      if (value && /^[A-Za-z0-9_. -]{1,150}$/.test(value)) url.searchParams.set(name, name === 'sck' ? value.slice(0,50) : value);
-    });
+    var source=params;
+    // On direct return visits the vendor may restore consented attribution to
+    // the existing canonical checkout link. Validate that link before reuse.
+    if(choice==='allow' && !params.get('utm_source') && link && link.href){
+      try { var restored=new URL(link.href); if(restored.origin===url.origin && restored.pathname===url.pathname) source=restored.searchParams; } catch (_) {}
+    }
+    if (window.PRAttribution) window.PRAttribution.copy(source,url);
     var clickId = params.get('fbclid');
     if (choice === 'allow' && clickId && /^[A-Za-z0-9_-]{1,500}$/.test(clickId)) url.searchParams.set('fbclid',clickId);
     return url.href;
   }
-  function updateLinks() { links.forEach(function (link) { link.href = checkout(); }); }
+  function updateLinks() { links.forEach(function (link) { link.href = checkout(link); }); }
   function start() {
     if (choice !== 'allow') return;
+    if (!utmifyLoaded) {
+      var utmScript = document.createElement('script');
+      utmScript.src = 'https://cdn.utmify.com.br/scripts/utms/latest.js';
+      utmScript.async = true; utmScript.defer = true;
+      utmScript.setAttribute('data-utmify-prevent-subids','');
+      // Keep canonical, validated attribution under our checkout bridge's control.
+      utmScript.onload = updateLinks;
+      document.head.appendChild(utmScript); utmifyLoaded = true;
+    }
     if (!window.fbq) {
       var fbq = function () { fbq.callMethod ? fbq.callMethod.apply(fbq,arguments) : fbq.queue.push(arguments); };
       fbq.queue=[]; fbq.push=fbq; fbq.loaded=true; fbq.version='2.0';
@@ -37,6 +49,7 @@
     window.fbq('track','PageView');
     window.fbq('track','ViewContent',{content_ids:[config.product],content_type:'product'});
     initialized=true;
+    startDiagnostics();
   }
   function applyChoice(value, persist) {
     choice=value === 'allow' || value === 'deny' ? value : null;
@@ -46,8 +59,32 @@
     if (choice !== 'allow' && window.fbq) window.fbq('consent','revoke');
     dialog.hidden=choice !== null; updateLinks(); start();
     document.getElementById('measurement-status').textContent=choice === null ? '' : config.lang === 'pt' ? (choice === 'allow' ? 'Medição opcional autorizada.' : 'Medição opcional desativada.') : (choice === 'allow' ? 'Medición opcional autorizada.' : 'Medición opcional desactivada.');
+    // Reload also on cross-tab revocation to stop vendor listeners and timers.
+    if (choice !== 'allow' && utmifyLoaded && window.location.reload) window.location.reload();
   }
   function choose(value) { applyChoice(value,true); }
+  function diagnostic(name, extra) {
+    syncChoice();
+    if (choice !== 'allow' || !window.fbq) return;
+    window.fbq('trackCustom',name,Object.assign({content_ids:[config.product],funnel_version:'utmify-2026-09-06'},extra || {}));
+  }
+  function startDiagnostics() {
+    if (diagnosticsStarted || !document.querySelector) return;
+    diagnosticsStarted=true;
+    document.querySelectorAll('.gallery a').forEach(function(link,index){
+      link.addEventListener('click',function(){diagnostic('ProofOpen',{proof_id:'sample_'+(index+1)});});
+    });
+    document.querySelectorAll('details').forEach(function(detail,index){
+      var recorded=false;
+      detail.addEventListener('toggle',function(){if(detail.open && !recorded && choice==='allow'){recorded=true;diagnostic('DetailsOpen',{section_id:'details_'+(index+1)});}});
+    });
+    if (window.IntersectionObserver) {
+      var offer=document.querySelector('.buy');
+      if(offer){var observer=new window.IntersectionObserver(function(entries){
+        if(entries.some(function(entry){return entry.isIntersecting;}) && choice==='allow'){diagnostic('OfferVisible');observer.disconnect();}
+      },{threshold:0.25});observer.observe(offer);}
+    }
+  }
   function syncChoice() {
     // If storage is unavailable, keep only this page's known choice.
     // A missing/invalid stored preference is not consent.
@@ -74,6 +111,7 @@
   links.forEach(function(link){link.addEventListener('click',function(){
     // Recheck before tracking in case another tab revoked consent moments ago.
     syncChoice();
+    updateLinks();
     // CheckoutClick is a diagnostic. Hotmart owns checkout-load and purchase events.
     if(choice === 'allow' && window.fbq) window.fbq('trackCustom','CheckoutClick',{content_ids:[config.product]});
   });});

@@ -9,7 +9,8 @@ function runtime(saved=null,blocked=false){
   elements['sales-config']={dataset:{checkout:links[0].href,pixel:'2085840802138189',product:'8444319',lang:'pt'}};
   const scripts=[];
   const window={location:{search:'?utm_source=meta&utm_campaign=pr-k2&meta_campaign_id=120250216188090633&meta_adset_id=120250216545720633&meta_ad_id=120250216545710633&sck=ad123&fbclid=test-click&email=a%40b.com&child_age=4&off=bad'},localStorage:{getItem(){if(blocked)throw Error();return saved},setItem(_,v){if(blocked)throw Error();saved=v}}};
-  const document={getElementById:id=>elements[id],querySelectorAll:()=>links,createElement:()=>({}),head:{appendChild:s=>scripts.push(s)}};
+  const document={getElementById:id=>elements[id],querySelectorAll:()=>links,createElement:()=>({setAttribute(){}}),head:{appendChild:s=>scripts.push(s)}};
+  vm.runInNewContext(fs.readFileSync(new URL('../vsl/attribution.js',import.meta.url),'utf8'),{window,document,URL,URLSearchParams});
   vm.runInNewContext(source,{window,document,URL,URLSearchParams});
   return{window,elements,links,scripts,calls:()=>Array.from(window.fbq?.queue??[],a=>Array.from(a))};
 }
@@ -25,7 +26,7 @@ for(const blocked of [false,true]){
   assert.equal(u.searchParams.get('meta_ad_id'),'120250216545710633');
   for(const p of ['fbclid','email','child_age','off']) assert.equal(u.searchParams.has(p),false);
   r.elements.allow.events.click();
-  assert.equal(r.scripts.length,1);
+  assert.equal(r.scripts.length,2);
   assert.equal(new URL(r.links[0].href).searchParams.get('fbclid'),'test-click');
   r.elements.allow.events.click();
   assert.equal(r.calls().filter(c=>c[1]==='PageView').length,1);
@@ -40,7 +41,7 @@ for(const blocked of [false,true]){
   assert(!r.calls().some(c=>['Purchase','InitiateCheckout'].includes(c[1])));
 }
 assert.equal(runtime('deny').scripts.length,0);
-assert.equal(runtime('allow').scripts.length,1);
+assert.equal(runtime('allow').scripts.length,2);
 for(const lang of ['pt','es']){
   const html=fs.readFileSync(new URL(`../vsl/${lang}/index.html`,import.meta.url),'utf8');
   assert(!/href="#"|deadline|12 meses|2 minutos|<video|SEUNUMERO/.test(html));

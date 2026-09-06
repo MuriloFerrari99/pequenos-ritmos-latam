@@ -1,0 +1,22 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+const node=()=>({events:{},addEventListener(n,f){this.events[n]=f},focus(){}});
+const els=Object.fromEntries(['consent','allow','deny','preferences','measurement-status'].map(k=>[k,node()]));
+els['sales-config']={dataset:{checkout:'https://pay.hotmart.com/T107441078P?checkoutMode=10',pixel:'2085840802138189',product:'8443694',lang:'es'}};
+const link=node(),proof=node(),detail=node(),offer=node(),scripts=[];
+let saved=null,reloads=0,intersect,disconnected=false;
+const window={location:{search:'',reload(){reloads++}},localStorage:{getItem(){return saved},setItem(k,v){saved=v}},addEventListener(){},IntersectionObserver:class{constructor(fn){intersect=fn}observe(e){assert.equal(e,offer)}disconnect(){disconnected=true}}};
+const document={getElementById:k=>els[k],querySelector:s=>s==='.buy'?offer:null,querySelectorAll:s=>s==='a.co'?[link]:s==='.gallery a'?[proof]:s==='details'?[detail]:[],createElement:()=>({setAttribute(k,v){this[k]=v}}),head:{appendChild(s){scripts.push(s)}}};
+for(const file of ['attribution.js','sales.js'])vm.runInNewContext(fs.readFileSync(new URL('../vsl/'+file,import.meta.url),'utf8'),{window,document,URL,URLSearchParams});
+assert.equal(scripts.length,0);els.allow.events.click();assert.equal(scripts.length,2);
+assert.equal(scripts[0].src,'https://cdn.utmify.com.br/scripts/utms/latest.js');assert('data-utmify-prevent-subids' in scripts[0]);
+const calls=()=>Array.from(window.fbq.queue,a=>Array.from(a));
+proof.events.click();detail.open=true;detail.events.toggle();detail.events.toggle();intersect([{isIntersecting:true}]);
+assert(disconnected);for(const name of ['PageView','ViewContent','ProofOpen','DetailsOpen','OfferVisible'])assert.equal(calls().filter(c=>c[1]===name).length,1,name);
+// A restored direct-return checkout remains attributed without retaining PII.
+link.href='https://pay.hotmart.com/T107441078P?utm_source=FB&utm_campaign=kit%7C120250216188090633&utm_medium=es%7C120250252288060633&utm_content=c2%7C120250252288070633&utm_term=Instagram_Reels&email=a%40b.com';
+link.events.click();const url=new URL(link.href);assert(url.searchParams.has('xcod'));assert(!url.searchParams.has('email'));assert.equal(url.searchParams.get('checkoutMode'),'10');
+els.deny.events.click();assert.equal(reloads,1);const count=calls().length;proof.events.click();link.events.click();assert.equal(calls().length,count);
+assert(!calls().some(c=>['Purchase','InitiateCheckout','AddToCart'].includes(c[1])));
+console.log('PASS: consent-gated vendor, real proof/offer events, one-time diagnostics, restored attribution, revocation and no invented purchase');

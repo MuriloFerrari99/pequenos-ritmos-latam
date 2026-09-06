@@ -14,7 +14,9 @@ function page(url, html, base) {
     currentScript: { src: new URL('navigation.js', base).href },
     querySelectorAll(selector) { const attribute = selector.match(/\[(.+)\]/)[1]; return links.filter(link => link.attrs.includes(attribute)); }
   };
-  vm.runInNewContext(source, { document, window: { location: new URL(url) }, URL, URLSearchParams });
+  const window = {location:new URL(url)};
+  vm.runInNewContext(fs.readFileSync(new URL('vsl/attribution.js',site),'utf8'), {document,window,URL,URLSearchParams});
+  vm.runInNewContext(source, {document,window,URL,URLSearchParams});
   return links;
 }
 for (const base of ['https://muriloferrari99.github.io/pequenos-ritmos-latam/vsl/', 'http://localhost:8080/vsl/']) {
