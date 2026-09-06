@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 const site = new URL('../', import.meta.url);
 const source = fs.readFileSync(new URL('vsl/navigation.js', site), 'utf8');
-const routes = ['pt/', 'es/', 'es/mx/', 'es/co/', 'es/cl/', 'es/pe/', 'es/ar/'];
+const routes = ['pt/', 'es/', 'es/a/', 'es/b/', 'es/mx/', 'es/co/', 'es/cl/', 'es/pe/', 'es/ar/'];
 function page(url, html, base) {
   const links = [...html.matchAll(/<a\s+([^>]+)>/g)].map(([, attrs]) => ({
     attrs,
@@ -29,7 +29,7 @@ for (const base of ['https://muriloferrari99.github.io/pequenos-ritmos-latam/vsl
       const logo = links.find(link => link.getAttribute('href') === '#top');
       assert(logo); assert.equal(new URL(logo.href).search, entry.search);
       const policies = links.filter(link => link.attrs.includes('data-policy-link'));
-      assert.equal(policies.length, 3);
+      assert.equal(policies.length, route === 'es/b/' ? 4 : 3);
       for (const policy of policies) {
         const url = new URL(policy.href);
         assert.equal(url.searchParams.get('return_to'), route);
@@ -51,4 +51,4 @@ for (const base of ['https://muriloferrari99.github.io/pequenos-ritmos-latam/vsl
     assert.equal(back.href,new URL('es/',base).href);
   }
 }
-console.log('PASS: seven country/language routes, both policies, consent policy link, logo query, production/local base, index.html paths, campaign retention, prohibited fields and invalid redirect rejection.');
+console.log('PASS: nine country/language/experiment routes, both policies, consent policy link, logo query, production/local base, index.html paths, campaign retention, prohibited fields and invalid redirect rejection.');

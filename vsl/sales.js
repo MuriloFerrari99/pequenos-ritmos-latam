@@ -1,5 +1,8 @@
 (function () {
   'use strict';
+  var experiment = window.PRExperiment;
+  if (experiment && experiment.redirecting) return;
+  var preview = experiment && experiment.preview;
   var config = document.getElementById('sales-config').dataset;
   var key = 'pr-sales-measurement-v3';
   var choice = null;
@@ -21,12 +24,13 @@
     }
     if (window.PRAttribution) window.PRAttribution.copy(source,url);
     var clickId = params.get('fbclid');
-    if (choice === 'allow' && clickId && /^[A-Za-z0-9_-]{1,500}$/.test(clickId)) url.searchParams.set('fbclid',clickId);
+    if (!preview && choice === 'allow' && clickId && /^[A-Za-z0-9_-]{1,500}$/.test(clickId)) url.searchParams.set('fbclid',clickId);
+    if (experiment && experiment.checkout) experiment.checkout(url);
     return url.href;
   }
   function updateLinks() { links.forEach(function (link) { link.href = checkout(link); }); }
   function start() {
-    if (choice !== 'allow') return;
+    if (preview || choice !== 'allow') return;
     if (!utmifyLoaded) {
       var utmScript = document.createElement('script');
       utmScript.src = 'https://cdn.utmify.com.br/scripts/utms/latest.js';
@@ -46,10 +50,12 @@
     window.fbq('consent','grant');
     if (initialized) return;
     window.fbq('init',config.pixel);
-    window.fbq('track','PageView');
-    window.fbq('track','ViewContent',{content_ids:[config.product],content_type:'product'});
+    var metadata = experiment && experiment.metadata ? experiment.metadata() : {};
+    window.fbq('track','PageView',metadata);
+    window.fbq('track','ViewContent',Object.assign({content_ids:[config.product],content_type:'product'},metadata));
     initialized=true;
     startDiagnostics();
+    if(experiment && experiment.expose && experiment.expose()) diagnostic('LandingExperimentExposure' + experiment.variant);
   }
   function applyChoice(value, persist) {
     choice=value === 'allow' || value === 'deny' ? value : null;
@@ -65,8 +71,8 @@
   function choose(value) { applyChoice(value,true); }
   function diagnostic(name, extra) {
     syncChoice();
-    if (choice !== 'allow' || !window.fbq) return;
-    window.fbq('trackCustom',name,Object.assign({content_ids:[config.product],funnel_version:'utmify-2026-09-06'},extra || {}));
+    if (preview || choice !== 'allow' || !window.fbq) return;
+    window.fbq('trackCustom',name,Object.assign({content_ids:[config.product],funnel_version:'utmify-2026-09-06'},experiment && experiment.metadata ? experiment.metadata() : {},extra || {}));
   }
   function startDiagnostics() {
     if (diagnosticsStarted || !document.querySelector) return;
@@ -113,7 +119,8 @@
     syncChoice();
     updateLinks();
     // CheckoutClick is a diagnostic. Hotmart owns checkout-load and purchase events.
-    if(choice === 'allow' && window.fbq) window.fbq('trackCustom','CheckoutClick',{content_ids:[config.product]});
+    diagnostic('CheckoutClick');
+    if (!preview && choice === 'allow' && experiment && experiment.checkoutClick && experiment.checkoutClick()) diagnostic('LandingExperimentCheckout' + experiment.variant);
   });});
   dialog.hidden=choice === 'allow' || choice === 'deny';
   updateLinks(); start();
