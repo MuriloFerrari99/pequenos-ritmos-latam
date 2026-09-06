@@ -1,7 +1,7 @@
 (function () {
   'use strict';
-  var ENABLED = false;
-  var ID = 'pr_ab_20260906';
+  var ENABLED = true;
+  var ID = 'pr_ab_20260906_r2';
   var END = Date.parse('2026-09-07T04:04:00Z');
   var AD = '120250252288070633';
   var CAMPAIGN = '120250216188090633';
@@ -9,10 +9,10 @@
   var base = new URL('./es/', document.currentScript.src);
   var url = new URL(window.location.href);
   var route = url.pathname.replace(/index\.html$/, '');
-  var page = route === base.pathname + 'a/' ? 'A' : route === base.pathname + 'b/' ? 'B' : null;
+  var page = route === base.pathname + 'a2/' ? 'A' : route === base.pathname + 'b2/' ? 'B' : null;
   var preview = url.searchParams.get('preview') === '1';
   var state = null;
-  var experiment = {id: ID, variant: page, enrolled: false, preview: preview, redirecting: false};
+  var experiment = {id: ID, variant: page, eventSuffix: 'R2', enrolled: false, preview: preview, redirecting: false};
   window.PRExperiment = experiment;
   function read() {
     try {
@@ -32,7 +32,7 @@
       try { window.sessionStorage.setItem(KEY, JSON.stringify(state)); }
       catch (_) { return; } // No stable assignment: keep the control, outside the experiment.
     }
-    var target = new URL(state.variant.toLowerCase() + '/', base);
+    var target = new URL(state.variant.toLowerCase() + '2/', base);
     target.search = url.search;
     target.hash = url.hash;
     experiment.redirecting = true;
@@ -61,9 +61,9 @@
     } catch (_) { return false; }
   };
   experiment.checkout = function (target) {
-    if (preview) target.searchParams.set('sck', 'preview_ab0906' + (page || 'A'));
-    else if (experiment.enrolled) target.searchParams.set('sck', AD + '_ab0906' + page);
-    else if (page) target.searchParams.set('sck', 'direct_ab0906' + page);
+    if (preview) target.searchParams.set('sck', 'preview_ab0906r2' + (page || 'A'));
+    else if (experiment.enrolled) target.searchParams.set('sck', AD + '_ab0906r2' + page);
+    else if (page) target.searchParams.set('sck', 'direct_ab0906r2' + page);
     return target;
   };
 })();

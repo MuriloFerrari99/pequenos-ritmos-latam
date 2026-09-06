@@ -55,7 +55,7 @@
     window.fbq('track','ViewContent',Object.assign({content_ids:[config.product],content_type:'product'},metadata));
     initialized=true;
     startDiagnostics();
-    if(experiment && experiment.expose && experiment.expose()) diagnostic('LandingExperimentExposure' + experiment.variant);
+    if(experiment && experiment.expose && experiment.expose()) diagnostic('LandingExperimentExposure' + (experiment.eventSuffix || '') + experiment.variant);
   }
   function applyChoice(value, persist) {
     choice=value === 'allow' || value === 'deny' ? value : null;
@@ -120,7 +120,7 @@
     updateLinks();
     // CheckoutClick is a diagnostic. Hotmart owns checkout-load and purchase events.
     diagnostic('CheckoutClick');
-    if (!preview && choice === 'allow' && experiment && experiment.checkoutClick && experiment.checkoutClick()) diagnostic('LandingExperimentCheckout' + experiment.variant);
+    if (!preview && choice === 'allow' && experiment && experiment.checkoutClick && experiment.checkoutClick()) diagnostic('LandingExperimentCheckout' + (experiment.eventSuffix || '') + experiment.variant);
   });});
   dialog.hidden=choice === 'allow' || choice === 'deny';
   updateLinks(); start();
