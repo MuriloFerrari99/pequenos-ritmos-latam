@@ -2,7 +2,7 @@
   'use strict';
   // Routes are relative to this script's directory, including on a local preview.
   var base = new URL('./', document.currentScript.src);
-  var routes = ['pt/', 'es/', 'es/a/', 'es/b/', 'es/a2/', 'es/b2/', 'es/mx/', 'es/co/', 'es/cl/', 'es/pe/', 'es/ar/'];
+  var routes = ['pt/', 'es/', 'es/a/', 'es/b/', 'es/a2/', 'es/b2/', 'es/a3/', 'es/b3/', 'es/mx/', 'es/co/', 'es/cl/', 'es/pe/', 'es/ar/'];
   var params = new URLSearchParams(window.location.search);
   function copyCampaign(target) {
     if (window.PRAttribution) window.PRAttribution.copy(params,target);
